@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMW Tire Selector</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue: #1C69D4; --blue-dark: #0f4a9e; --blue-light: #e8f0fe;
+    --gold: #FFD700; --bg: #f4f5f7; --card-bg: #ffffff;
+    --text: #111111; --text-muted: #555555; --border: #d8dde6;
+    --green: #1a7a4a; --green-light: #e6f4ed;
+  --warn: #b45309; --warn-light: #fef3c7; --warn-border: #f59e0b;
+  --danger: #991b1b; --danger-light: #fef2f2; --danger-border: #ef4444;
+  }
+  body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: #0a1628; padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; position: sticky; top: 0; z-index: 100;
+    border-bottom: 2px solid var(--blue);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .bmw-roundel { width: 38px; height: 38px; flex-shrink: 0; }
+  .header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 0.04em; text-transform: uppercase; }
+  .header-sub { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
+  .header-right { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; }
+
+  .tabs { display: flex; background: #0d1e38; border-bottom: 1px solid #1a3060; padding: 0 2rem; }
+  .tab { padding: 12px 24px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s; white-space: nowrap; }
+  .tab:hover { color: rgba(255,255,255,0.8); }
+  .tab.active { color: #fff; border-bottom-color: var(--gold); }
+
+  main { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ---- STEP WIZARD ---- */
+  .steps-bar { display: flex; align-items: center; margin-bottom: 2rem; gap: 0; }
+  .step-item { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; border: 2px solid var(--border); background: var(--bg); color: var(--text-muted); flex-shrink: 0; transition: all 0.2s; }
+  .step-num.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .step-num.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .step-text { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  .step-text.active { color: var(--blue); }
+  .step-text.done { color: var(--green); }
+  .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; }
+  .step-line.done { background: var(--green); }
+
+  /* ---- CARDS ---- */
+  .wizard-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; }
+  .wizard-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 4px; }
+  .wizard-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+  select { width: 100%; padding: 10px 34px 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg); font-family: 'Barlow', sans-serif; font-size: 14px; color: var(--text); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; transition: border-color 0.15s; }
+  select:focus { outline: none; border-color: var(--blue); }
+  select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .field-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; display: block; }
+
+  .select-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ---- SIZE DISPLAY ---- */
+  .size-display { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 1.5rem; }
+  .size-box { background: var(--blue-light); border: 1.5px solid #99bbff; border-radius: 10px; padding: 16px; text-align: center; }
+  .size-box-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue-dark); margin-bottom: 6px; }
+  .size-box-value { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; color: var(--blue); line-height: 1; }
+  .size-box-rim { font-size: 12px; color: var(--blue-dark); margin-top: 4px; opacity: 0.8; }
+  .size-note { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 10px; background: #f8f9fc; border-radius: 6px; padding: 8px 12px; }
+
+  /* ---- STEP 2 QUESTIONS ---- */
+  .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .q-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.15s; }
+  .q-card:hover { border-color: var(--blue); background: var(--blue-light); }
+  .q-card.selected { border-color: var(--blue); background: var(--blue-light); }
+  .q-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .q-card-sub { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+  .q-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin: 1rem 0 8px; }
+
+  /* ---- BUTTONS ---- */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 24px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: var(--bg); color: var(--text-muted); border: 1.5px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-row { display: flex; gap: 10px; margin-top: 1.5rem; align-items: center; }
+
+  /* ---- STEP 3 RESULTS ---- */
+  .rec-grid { display: flex; flex-direction: column; gap: 12px; }
+  .rec-card { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s; }
+  .rec-card:hover { border-color: var(--blue); }
+  .rec-card.top-pick { border-color: var(--gold); background: #fffdf0; }
+  .rec-header { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+  .rec-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); }
+  .rec-name { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; margin: 2px 0; }
+  .rec-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .rec-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .badge-aw { background: #e1f5ee; color: #0f6e56; }
+  .badge-dry { background: #fff3c0; color: #5a3e00; }
+  .badge-wet { background: #e0f0ff; color: #0a4a80; }
+  .badge-top { background: var(--gold); color: #4a3000; }
+  .rec-sizes { text-align: right; flex-shrink: 0; }
+  .rec-size-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .rec-size-val { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); }
+  .rec-divider { height: 1px; background: var(--border); }
+  .rec-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .rec-stat { background: var(--bg); border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .rec-stat-label { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+  .rec-stat-value { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .rec-stat-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 4px; overflow: hidden; }
+  .rec-stat-fill { height: 100%; border-radius: 2px; }
+  .rec-features { display: flex; flex-wrap: wrap; gap: 4px; }
+  .badge-feat { background: var(--blue-light); color: var(--blue-dark); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .rec-oem { font-size: 11px; color: var(--text-muted); background: var(--bg); border-radius: 6px; padding: 6px 10px; }
+  .rec-oem strong { color: var(--text); }
+  .no-rec { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 14px; }
+  .weight-warning { border-radius: 10px; padding: 14px 16px; margin-top: 1.5rem; display: flex; gap: 12px; align-items: flex-start; }
+  .weight-warning.warn { background: var(--warn-light); border: 1.5px solid var(--warn-border); }
+  .weight-warning.danger { background: var(--danger-light); border: 1.5px solid var(--danger-border); }
+  .weight-warning-icon { font-size: 22px; flex-shrink: 0; line-height: 1; }
+  .weight-warning-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .weight-warning.warn .weight-warning-title { color: var(--warn); }
+  .weight-warning.danger .weight-warning-title { color: var(--danger); }
+  .weight-warning-body { font-size: 12px; line-height: 1.5; color: var(--text); }
+  .weight-warning-body strong { font-weight: 700; }
+  .load-index-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
+  .load-index-table th { background: rgba(0,0,0,0.06); padding: 4px 8px; text-align: left; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .load-index-table td { padding: 4px 8px; border-top: 1px solid rgba(0,0,0,0.08); }
+  .rec-load { display: flex; align-items: center; gap: 6px; font-size: 11px; background: var(--bg); border-radius: 6px; padding: 6px 10px; margin-top: 2px; }
+  .rec-load-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 4px; }
+  .rec-load-badge.ok { background: #e1f5ee; color: #0f6e56; }
+  .rec-load-badge.warn { background: var(--warn-light); color: var(--warn); }
+  .rec-load-badge.heavy { background: var(--danger-light); color: var(--danger); }
+
+  /* ---- TIRE SELECTOR TAB ---- */
+  .spectrum-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+  .spectrum-labels { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .spectrum-track { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+  .seg { flex: 1; }
+  .s1{background:#9E5C00;} .s2{background:#7A7A00;} .s3{background:#2E8B2E;} .s4{background:#1C7A8C;} .s5{background:#1C69D4;} .s6{background:#5C2E8C;} .s7{background:#8C1C3A;}
+  input[type=range] { width: 100%; height: 6px; -webkit-appearance: none; background: transparent; cursor: pointer; }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--border); border-radius: 3px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--blue); border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.25); margin-top: -8px; }
+  input[type=range]:focus { outline: none; }
+  .spectrum-value { text-align: center; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--blue); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 8px; }
+  .filters-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .filter-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+  .filter-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: block; }
+  .results-bar { display: flex; align-items: center; margin-bottom: 1rem; }
+  .results-count { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .results-count span { color: var(--blue); font-size: 18px; }
+  .tire-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .tire-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s, box-shadow 0.15s; }
+  .tire-card:hover { border-color: var(--blue); box-shadow: 0 2px 12px rgba(28,105,212,0.12); }
+  .tire-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue); }
+  .tire-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .tire-spectrum-bar { height: 4px; border-radius: 2px; background: var(--border); position: relative; overflow: hidden; }
+  .tire-spectrum-fill { position: absolute; height: 100%; border-radius: 2px; }
+  .tire-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .badge-model { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-allweather { background: #e1f5ee; color: #0f6e56; }
+  .tire-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .no-results { grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); font-size: 15px; }
+
+  footer { text-align: center; padding: 2rem; font-size: 11px; color: #aaa; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2rem; border-top: 1px solid var(--border); }
+
+  @media (max-width: 650px) {
+    .select-row, .q-grid, .size-display, .filters-section { grid-template-columns: 1fr; }
+    .spectrum-labels { font-size: 10px; }
+    header { padding: 0 1rem; }
+    .header-right { display: none; }
+    main { padding: 1rem; }
+    .tabs { padding: 0 1rem; overflow-x: auto; }
+    .rec-card { grid-template-columns: 1fr; }
+    .rec-sizes { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <svg class="bmw-roundel" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="none" stroke="white" stroke-width="3"/>
+      <circle cx="50" cy="50" r="36" fill="none" stroke="white" stroke-width="1"/>
+      <path d="M50 14 A36 36 0 0 1 86 50 L50 50 Z" fill="white"/>
+      <path d="M50 86 A36 36 0 0 1 14 50 L50 50 Z" fill="white"/>
+      <path d="M14 50 A36 36 0 0 1 50 14 L50 50 Z" fill="#1C69D4"/>
+      <path d="M86 50 A36 36 0 0 1 50 86 L50 50 Z" fill="#1C69D4"/>
+    </svg>
+    <div>
+      <div class="header-title">BMW Tire Selector</div>
+      <div class="header-sub">Motorrad Parts &amp; Accessories</div>
+    </div>
+  </div>
+  <div class="header-right">Internal Sales Tool</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('wizard', this)">Tire Recommendation Wizard</div>
+  <div class="tab" onclick="switchTab('selector', this)">Quick Tire Browser</div>
+</div>
+
+<main>
+
+  <!-- =================== TAB 1: WIZARD =================== -->
+  <div class="tab-content active" id="tab-wizard">
+
+    <!-- STEPS BAR -->
+    <div class="steps-bar">
+      <div class="step-item">
+        <div class="step-num active" id="snum1">1</div>
+        <div class="step-text active" id="stxt1">Bike &amp; Year</div>
+      </div>
+      <div class="step-line" id="sline1"></div>
+      <div class="step-item">
+        <div class="step-num" id="snum2">2</div>
+        <div class="step-text" id="stxt2">Riding Needs</div>
+      </div>
+      <div class="step-line" id="sline2"></div>
+      <div class="step-item">
+        <div class="step-num" id="snum3">3</div>
+        <div class="step-text" id="stxt3">Recommendation</div>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="step1">
+      <div class="wizard-card">
+        <div class="wizard-title">Step 1 — Select the Bike</div>
+        <div class="wizard-sub">Choose the category, model, and year to see OEM tire sizes.</div>
+        <div class="select-row">
+          <div>
+            <label class="field-label" for="catSelect">Category</label>
+            <select id="catSelect" onchange="onCatChange()">
+              <option value="">— Select category —</option>
+              <option value="GS Adventure">GS / Adventure</option>
+              <option value="F-Series GS">F-Series GS</option>
+              <option value="R-Series Roadster">R-Series Roadster &amp; Sport</option>
+              <option value="S-Series Sport">S-Series Sport</option>
+              <option value="K-Series">K-Series</option>
+              <option value="F-Series Street">F-Series Street</option>
+              <option value="Cruiser">Cruiser / R 18</option>
+              <option value="Scooter">Scooter</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="modelSelect">Model</label>
+            <select id="modelSelect" disabled onchange="onModelChange()">
+              <option value="">— Select model —</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="yearSelect">Year</label>
+            <select id="yearSelect" disabled onchange="onYearChange()">
+              <option value="">— Select year —</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="sizeDisplay" style="display:none">
+          <div class="size-display">
+            <div class="size-box">
+              <div class="size-box-label">Front Tire</div>
+              <div class="size-box-value" id="frontSize">—</div>
+              <div class="size-box-rim" id="frontRim">—</div>
+            </div>
+            <div class="size-box">
+              <div class="size-box-label">Rear Tire</div>
+              <div class="size-box-value" id="rearSize">—</div>
+              <div class="size-box-rim" id="rearRim">—</div>
+            </div>
+          </div>
+          <div class="size-note" id="sizeNote"></div>
+        </div>
+
+        <div id="weightWarning" style="display:none;margin-top:1rem;"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="toStep2Btn" onclick="goStep2()" disabled>Next: Riding Needs →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="step2" style="display:none">
+      <div class="wizard-card">
+        <div class="wizard-title">Step 2 — Riding Needs</div>
+        <div class="wizard-sub">Tell me about the customer's riding style and priorities.</div>
+
+        <div class="q-label">Where does this bike get ridden most?</div>
+        <div class="q-grid">
+          <div class="q-card" onclick="selectQ('terrain','offroad',this)">
+            <div class="q-card-title">Off-road / Trails</div>
+            <div class="q-card-sub">Dirt roads, gravel, mud, technical terrain</div>
+          </div>
+          <div class="q-card" onclick="selectQ('terrain','mixed',this)">
+            <div class="q-card-title">Mixed Adventure</div>
+            <div class="q-card-sub">Mostly road with regular off-road sections</div>
+          </div>
+          <div class="q-card" onclick="selectQ('terrain','road',this)">
+            <div class="q-card-title">Road / Touring</div>
+            <div class="q-card-sub">Highways, country roads, daily commuting</div>
+          </div>
+          <div class="q-card" onclick="selectQ('terrain','sport',this)">
+            <div class="q-card-title">Sport / Track</div>
+            <div class="q-card-sub">Fast road riding, track days, performance focus</div>
+          </div>
+        </div>
+
+        <div class="q-label">Weather conditions?</div>
+        <div class="q-grid">
+          <div class="q-card" onclick="selectQ('weather','wet',this)">
+            <div class="q-card-title">🌧 Rain</div>
+            <div class="q-card-sub">Rides in all weather — rain, cold, year-round</div>
+          </div>
+          <div class="q-card" onclick="selectQ('weather','dry',this)">
+            <div class="q-card-title">☀️ Shine</div>
+            <div class="q-card-sub">Mostly dry, fair weather rider</div>
+          </div>
+        </div>
+
+        <div class="q-label">What are the priorities? <span style="font-weight:400;text-transform:none;letter-spacing:0;font-family:'Barlow',sans-serif;font-size:11px;color:#888;">(Select all that apply)</span></div>
+        <div class="q-grid">
+          <div class="q-card" onclick="togglePriority('mileage',this)">
+            <div class="q-card-title">Long mileage</div>
+            <div class="q-card-sub">Wants tires to last as long as possible</div>
+          </div>
+          <div class="q-card" onclick="togglePriority('grip',this)">
+            <div class="q-card-title">Maximum grip</div>
+            <div class="q-card-sub">Performance and confidence in corners</div>
+          </div>
+          <div class="q-card" onclick="togglePriority('value',this)">
+            <div class="q-card-title">Best value</div>
+            <div class="q-card-sub">Good performance at a reasonable price</div>
+          </div>
+          <div class="q-card" onclick="togglePriority('comfort',this)">
+            <div class="q-card-title">Comfort / Touring</div>
+            <div class="q-card-sub">Smooth ride, low vibration, long haul</div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goStep1()">← Back</button>
+          <button class="btn btn-primary" id="toStep3Btn" onclick="goStep3()" disabled>See Recommendations →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="step3" style="display:none">
+      <div class="wizard-card">
+        <div class="wizard-title">Step 3 — Recommended Tires</div>
+        <div class="wizard-sub" id="step3Sub">Based on your selections</div>
+
+        <div class="size-display" style="margin-bottom:1.5rem">
+          <div class="size-box">
+            <div class="size-box-label">Front Size to Order</div>
+            <div class="size-box-value" id="r3Front">—</div>
+            <div class="size-box-rim" id="r3FrontRim">—</div>
+          </div>
+          <div class="size-box">
+            <div class="size-box-label">Rear Size to Order</div>
+            <div class="size-box-value" id="r3Rear">—</div>
+            <div class="size-box-rim" id="r3RearRim">—</div>
+          </div>
+        </div>
+
+        <div class="rec-grid" id="recGrid"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goStep2()">← Back</button>
+          <button class="btn btn-primary" onclick="resetWizard()">Start Over</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =================== TAB 2: QUICK BROWSER =================== -->
+  <div class="tab-content" id="tab-selector">
+    <div class="spectrum-section">
+      <div class="section-label">Riding style spectrum</div>
+      <div class="spectrum-labels"><span>Full off-road</span><span>Adventure</span><span>Street / Touring</span><span>Track</span></div>
+      <div class="spectrum-track">
+        <div class="seg s1"></div><div class="seg s2"></div><div class="seg s3"></div>
+        <div class="seg s4"></div><div class="seg s5"></div><div class="seg s6"></div><div class="seg s7"></div>
+      </div>
+      <input type="range" min="1" max="7" value="4" step="1" id="spectrum"/>
+      <div class="spectrum-value" id="spectrum-label">Adventure / Street</div>
+    </div>
+    <div class="filters-section">
+      <div class="filter-card">
+        <label class="filter-label" for="bikeType">BMW model family</label>
+        <select id="bikeType">
+          <option value="all">All BMW models</option>
+          <optgroup label="Adventure / GS">
+            <option value="gs_big">R 1300/1250/1200 GS</option>
+            <option value="gs_small">F 900/850/750 GS</option>
+            <option value="gs_adv">GS Adventure (all)</option>
+            <option value="g310gs">G 310 GS</option>
+          </optgroup>
+          <optgroup label="Street / Naked">
+            <option value="r_series">R 1250 R / RS</option>
+            <option value="s_series">S 1000 R / RR / XR</option>
+            <option value="f_street">F 900 R / XR</option>
+            <option value="g310r">G 310 R</option>
+          </optgroup>
+          <optgroup label="Tourer">
+            <option value="rt">R 1250 RT / K 1600</option>
+            <option value="r18">R 18</option>
+          </optgroup>
+          <optgroup label="Scooter">
+            <option value="ce04">CE 04</option>
+            <option value="c400">C 400 X / GT</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="filter-card">
+        <label class="filter-label" for="brand">Brand</label>
+        <select id="brand">
+          <option value="all">All brands</option>
+          <option value="Michelin">Michelin</option>
+          <option value="Dunlop">Dunlop</option>
+          <option value="Metzeler">Metzeler</option>
+          <option value="Mitas">Mitas</option>
+          <option value="Pirelli">Pirelli</option>
+          <option value="Continental">Continental</option>
+          <option value="Shinko">Shinko</option>
+          <option value="Heidenau">Heidenau</option>
+        </select>
+      </div>
+      <div class="filter-card">
+        <label class="filter-label" for="weather">Conditions</label>
+        <select id="weather">
+          <option value="all">All conditions</option>
+          <option value="wet">Wet / Rain</option>
+          <option value="dry">Dry / Track</option>
+          <option value="all-weather">All-weather</option>
+        </select>
+      </div>
+    </div>
+    <div class="results-bar"><div class="results-count" id="results-count"><span>0</span> tires found</div></div>
+    <div class="tire-grid" id="tire-grid"></div>
+  </div>
+
+</main>
+
+<footer>BMW Motorrad Tire Selector &nbsp;·&nbsp; Internal Sales Reference &nbsp;·&nbsp; Stock tires only</footer>
+
+<script>
+// =================== BIKE SIZE DATABASE ===================
+const BIKES = {
+  "GS Adventure": [
+    { model:"R 1100 GS", years:[1993,1994,1995,1996,1997,1998,1999], front:"110/80 R19", frontRim:"2.50×19", rear:"140/80 R17", rearRim:"3.50×17", note:"Tube-type spoked wheels standard", bikeType:"gs_big", terrain:["offroad","mixed"] },
+    { model:"R 1150 GS", years:[1999,2000,2001,2002,2003,2004], front:"110/80 R19", frontRim:"2.50×19", rear:"150/70 R17", rearRim:"4.00×17", note:"Cast or spoked wheels", bikeType:"gs_big", terrain:["offroad","mixed"] },
+    { model:"R 1150 GS Adventure", years:[2001,2002,2003,2004,2005,2006], front:"110/80 R19", frontRim:"2.50×19", rear:"150/70 R17", rearRim:"4.00×17", note:"Tube-type on spoked wheels", bikeType:"gs_adv", terrain:["offroad","mixed"] },
+    { model:"R 1200 GS (2004–2012)", years:[2004,2005,2006,2007,2008,2009,2010,2011,2012], front:"110/80 R19", frontRim:"2.50×19", rear:"150/70 R17", rearRim:"4.00×17", note:"Air/oil cooled. Tubeless on cast, tube-type on spoked wheels.", bikeType:"gs_big", terrain:["offroad","mixed"] },
+    { model:"R 1200 GS Adventure (2006–2013)", years:[2006,2007,2008,2009,2010,2011,2012,2013], front:"110/80 R19", frontRim:"2.50×19", rear:"150/70 R17", rearRim:"4.00×17", note:"30L tank. Spoked tube-type wheels standard.", bikeType:"gs_adv", terrain:["offroad","mixed"] },
+    { model:"R 1200 GS LC (2013–2018)", years:[2013,2014,2015,2016,2017,2018], front:"120/70 R19", frontRim:"3.00×19", rear:"170/60 R17", rearRim:"4.50×17", note:"Water-cooled LC model. Wider tire profile.", bikeType:"gs_big", terrain:["offroad","mixed","road"] },
+    { model:"R 1200 GS Adventure LC (2014–2018)", years:[2014,2015,2016,2017,2018], front:"120/70 R19", frontRim:"3.00×19", rear:"170/60 R17", rearRim:"4.50×17", note:"30L tank version of the LC.", bikeType:"gs_adv", terrain:["offroad","mixed","road"] },
+    { model:"R 1250 GS (2019–2023)", years:[2019,2020,2021,2022,2023], front:"120/70 R19", frontRim:"3.00×19", rear:"170/60 R17", rearRim:"4.50×17", note:"ShiftCam engine. Same sizes as LC.", weightKg:249, loadLevel:"heavy", minLI:{front:69, rear:73}, twoUpNote:"Common adventure tourer — verify load index when customer rides two-up with luggage.", bikeType:"gs_big", terrain:["offroad","mixed","road"] },
+    { model:"R 1250 GS Adventure (2019–2023)", years:[2019,2020,2021,2022,2023], front:"120/70 R19", frontRim:"3.00×19", rear:"170/60 R17", rearRim:"4.50×17", note:"30L tank. Same tires as standard GS.", weightKg:249, loadLevel:"heavy", minLI:{front:69, rear:73}, twoUpNote:"Loaded adventure touring pushes combined weight high — verify load index for two-up riding.", bikeType:"gs_adv", terrain:["offroad","mixed","road"] },
+    { model:"R 1300 GS (2024–present)", years:[2024,2025,2026], front:"120/70 R19", frontRim:"3.00×19", rear:"170/60 R17", rearRim:"4.50×17", note:"New platform. Cross-spoke wheels standard.", weightKg:237, loadLevel:"heavy", minLI:{front:69, rear:73}, twoUpNote:"With passenger + luggage, confirm load index for combined weight over 450kg.", bikeType:"gs_big", terrain:["offroad","mixed","road"] },
+    { model:"R 1300 GS Adventure (2025–present)", years:[2025,2026], front:"120/70 R19", frontRim:"3.00×19", rear:"170/60 R17", rearRim:"4.50×17", note:"Larger 30L tank, DSA standard, extended hand protectors. Cross-spoke wheels.", weightKg:269, loadLevel:"extreme", minLI:{front:72, rear:76}, twoUpNote:"Heavy bike — 269kg wet. Two-up + luggage can push total load well over 500kg. Always verify front AND rear load index.", bikeType:"gs_adv", terrain:["offroad","mixed","road"] },
+  ],
+  "F-Series GS": [
+    { model:"F 650 GS Single (2000–2007)", years:[2000,2001,2002,2003,2004,2005,2006,2007], front:"100/90 R19", frontRim:"2.15×19", rear:"130/80 R17", rearRim:"2.75×17", note:"Single-cylinder. Narrower tires.", bikeType:"gs_small", terrain:["offroad","mixed"] },
+    { model:"F 650 GS Twin (2008–2012)", years:[2008,2009,2010,2011,2012], front:"110/80 R19", frontRim:"2.50×19", rear:"140/80 R17", rearRim:"3.50×17", note:"Parallel-twin 800cc engine under 650 name.", bikeType:"gs_small", terrain:["offroad","mixed"] },
+    { model:"F 700 GS (2012–2017)", years:[2012,2013,2014,2015,2016,2017], front:"110/80 R19", frontRim:"2.50×19", rear:"140/80 R17", rearRim:"3.50×17", note:"Detuned F800GS engine.", bikeType:"gs_small", terrain:["mixed","road"] },
+    { model:"F 800 GS (2008–2018)", years:[2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018], front:"90/90 R21", frontRim:"2.15×21", rear:"150/70 R17", rearRim:"4.00×17", note:"21\" front wheel — tall off-road stance.", bikeType:"gs_small", terrain:["offroad","mixed"] },
+    { model:"F 800 GS Adventure (2013–2018)", years:[2013,2014,2015,2016,2017,2018], front:"90/90 R21", frontRim:"2.15×21", rear:"150/70 R17", rearRim:"4.00×17", note:"Larger tank, handguards, spoked wheels.", bikeType:"gs_adv", terrain:["offroad","mixed"] },
+    { model:"F 750 GS (2018–2023)", years:[2018,2019,2020,2021,2022,2023], front:"110/80 R19", frontRim:"2.50×19", rear:"150/70 R17", rearRim:"4.00×17", note:"Entry-level parallel-twin GS.", bikeType:"gs_small", terrain:["mixed","road"] },
+    { model:"F 850 GS (2018–2023)", years:[2018,2019,2020,2021,2022,2023], front:"90/90 R21", frontRim:"2.15×21", rear:"150/70 R17", rearRim:"4.00×17", note:"21\" front. More off-road focused.", bikeType:"gs_small", terrain:["offroad","mixed"] },
+    { model:"F 850 GS Adventure (2019–2023)", years:[2019,2020,2021,2022,2023], front:"90/90 R21", frontRim:"2.15×21", rear:"150/70 R17", rearRim:"4.00×17", note:"Spoked tubeless wheels, larger tank.", weightKg:228, loadLevel:"heavy", minLI:{front:67, rear:71}, twoUpNote:"Adventure spec with larger tank — two-up with luggage brings combined load to consider.", bikeType:"gs_adv", terrain:["offroad","mixed"] },
+    { model:"F 900 GS (2024–present)", years:[2024,2025], front:"90/90 R21", frontRim:"2.15×21", rear:"150/70 R17", rearRim:"4.00×17", note:"New F 900 platform replacing F 850 GS.", bikeType:"gs_small", terrain:["offroad","mixed"] },
+    { model:"F 900 GS Adventure (2024–present)", years:[2024,2025], front:"90/90 R21", frontRim:"2.15×21", rear:"150/70 R17", rearRim:"4.00×17", note:"30L tank version.", bikeType:"gs_adv", terrain:["offroad","mixed"] },
+    { model:"G 310 GS (2017–present)", years:[2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"100/80 R19", frontRim:"2.50×19", rear:"130/80 R17", rearRim:"3.00×17", note:"Entry-level single-cylinder GS.", bikeType:"g310gs", terrain:["mixed","road"] },
+    { model:"G 650 GS (2011–2016)", years:[2011,2012,2013,2014,2015,2016], front:"100/90 R19", frontRim:"2.15×19", rear:"130/80 R17", rearRim:"2.75×17", note:"Rebranded F650GS single.", bikeType:"gs_small", terrain:["mixed","road"] },
+  ],
+  "R-Series Roadster": [
+    { model:"R 1100 R (1993–2001)", years:[1993,1994,1995,1996,1997,1998,1999,2000,2001], front:"120/70 R17", frontRim:"3.50×17", rear:"160/60 R17", rearRim:"4.50×17", note:"Boxer roadster, cast wheels.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1100 RS (1992–2001)", years:[1992,1993,1994,1995,1996,1997,1998,1999,2000,2001], front:"120/70 R17", frontRim:"3.50×17", rear:"160/60 R18", rearRim:"4.50×18", note:"18\" rear — limits tire choice.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1100 RT (1994–2001)", years:[1994,1995,1996,1997,1998,1999,2000,2001], front:"120/70 R17", frontRim:"3.50×17", rear:"160/60 R18", rearRim:"4.50×18", note:"18\" rear — confirm size before ordering.", bikeType:"rt", terrain:["road"] },
+    { model:"R 1100 S (1998–2005)", years:[1998,1999,2000,2001,2002,2003,2004,2005], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Sport model — wider 180 rear.", bikeType:"r_series", terrain:["sport","road"] },
+    { model:"R 1150 R (2000–2006)", years:[2000,2001,2002,2003,2004,2005,2006], front:"120/70 R17", frontRim:"3.50×17", rear:"160/60 R17", rearRim:"4.50×17", note:"17\" rear — wider tire choice than RS/RT.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1150 RS (2001–2004)", years:[2001,2002,2003,2004], front:"120/70 R17", frontRim:"3.50×17", rear:"160/60 R18", rearRim:"4.50×18", note:"18\" rear — confirm size.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1150 RT (2000–2005)", years:[2000,2001,2002,2003,2004,2005], front:"120/70 R17", frontRim:"3.50×17", rear:"160/60 R18", rearRim:"4.50×18", note:"18\" rear — confirm size.", bikeType:"rt", terrain:["road"] },
+    { model:"R 1200 R (2006–2014)", years:[2006,2007,2008,2009,2010,2011,2012,2013,2014], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Air/oil cooled boxer roadster.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1200 R LC (2015–2018)", years:[2015,2016,2017,2018], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Water-cooled LC model.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1200 RS (2015–2018)", years:[2015,2016,2017,2018], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Sport-touring roadster.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1200 RT (2005–2013)", years:[2005,2006,2007,2008,2009,2010,2011,2012,2013], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Full tourer, air-cooled.", bikeType:"rt", terrain:["road"] },
+    { model:"R 1200 RT LC (2014–2019)", years:[2014,2015,2016,2017,2018,2019], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Water-cooled RT.", weightKg:259, loadLevel:"extreme", minLI:{front:72, rear:76}, twoUpNote:"Heavy tourer — always verify load index for two-up with luggage.", bikeType:"rt", terrain:["road"] },
+    { model:"R 1250 R (2019–present)", years:[2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"ShiftCam engine roadster.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1250 RS (2019–present)", years:[2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Sport-touring RS.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R 1250 RT (2019–present)", years:[2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Full touring flagship.", weightKg:279, loadLevel:"extreme", minLI:{front:72, rear:76}, twoUpNote:"One of BMW's heaviest bikes — 279kg wet. Two-up touring with luggage demands high load index tires. Do not compromise.", bikeType:"rt", terrain:["road"] },
+    { model:"R nineT (2014–present)", years:[2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Heritage roadster.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"R nineT Scrambler (2016–present)", years:[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"110/80 R19", frontRim:"2.50×19", rear:"150/70 R17", rearRim:"4.00×17", note:"19\" front for scrambler look.", bikeType:"r_series", terrain:["mixed","road"] },
+  ],
+  "S-Series Sport": [
+    { model:"S 1000 RR (2009–2018)", years:[2009,2010,2011,2012,2013,2014,2015,2016,2017,2018], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"Wide 190 rear — superbike spec.", bikeType:"s_series", terrain:["sport"] },
+    { model:"S 1000 RR (2019–present)", years:[2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"M1000RR uses same sizes.", bikeType:"s_series", terrain:["sport"] },
+    { model:"S 1000 R (2014–2020)", years:[2014,2015,2016,2017,2018,2019,2020], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"Naked version of S1000RR.", bikeType:"s_series", terrain:["sport","road"] },
+    { model:"S 1000 R (2021–present)", years:[2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"Updated naked roadster.", bikeType:"s_series", terrain:["sport","road"] },
+    { model:"S 1000 XR (2015–2019)", years:[2015,2016,2017,2018,2019], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.25×17", note:"Adventure-sport with superbike tires.", bikeType:"s_series", terrain:["road","sport"] },
+    { model:"S 1000 XR (2020–present)", years:[2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.25×17", note:"Updated XR platform.", bikeType:"s_series", terrain:["road","sport"] },
+    { model:"HP4 (2012–2014)", years:[2012,2013,2014], front:"120/70 ZR17", frontRim:"3.50×17", rear:"200/55 ZR17", rearRim:"6.25×17", note:"200 rear — check fitment carefully.", bikeType:"s_series", terrain:["sport"] },
+    { model:"M 1000 RR (2021–present)", years:[2021,2022,2023,2024,2025,2026], front:"120/70 ZR17", frontRim:"3.50×17", rear:"200/55 ZR17", rearRim:"6.25×17", note:"BMW M race homologation model. Wide 200 rear — check fitment carefully.", bikeType:"s_series", terrain:["sport"] },
+    { model:"M 1000 R (2023–present)", years:[2023,2024,2025,2026], front:"120/70 ZR17", frontRim:"3.50×17", rear:"200/55 ZR17", rearRim:"6.25×17", note:"Naked M model. Wide 200 rear — wider than standard S 1000 R. Comes stock with Bridgestone RS11.", bikeType:"s_series", terrain:["sport","road"] },
+    { model:"M 1000 XR (2024–present)", years:[2024,2025,2026], front:"120/70 ZR17", frontRim:"3.50×17", rear:"200/55 ZR17", rearRim:"6.25×17", note:"M adventure-sport. Wide 200 rear — wider than standard S 1000 XR.", bikeType:"s_series", terrain:["sport","road"] },
+  ],
+  "K-Series": [
+    { model:"K 1100 RS (1992–1996)", years:[1992,1993,1994,1995,1996], front:"120/70 ZR17", frontRim:"3.50×17", rear:"160/60 ZR17", rearRim:"4.50×17", note:"4-cylinder sport tourer.", bikeType:"rt", terrain:["road","sport"] },
+    { model:"K 1100 LT (1991–1999)", years:[1991,1992,1993,1994,1995,1996,1997,1998,1999], front:"120/70 ZR17", frontRim:"3.50×17", rear:"160/60 ZR18", rearRim:"4.50×18", note:"18\" rear — limited tire choice.", bikeType:"rt", terrain:["road"] },
+    { model:"K 1200 RS (1996–2005)", years:[1996,1997,1998,1999,2000,2001,2002,2003,2004,2005], front:"120/70 ZR17", frontRim:"3.50×17", rear:"170/60 ZR17", rearRim:"5.00×17", note:"170 rear — check fitment.", bikeType:"rt", terrain:["road","sport"] },
+    { model:"K 1200 S (2004–2008)", years:[2004,2005,2006,2007,2008], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/50 ZR17", rearRim:"6.00×17", note:"Sport flagship — wide 190 rear.", bikeType:"s_series", terrain:["sport","road"] },
+    { model:"K 1200 R (2004–2008)", years:[2004,2005,2006,2007,2008], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Naked K-series powerhouse.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"K 1200 GT (2002–2008)", years:[2002,2003,2004,2005,2006,2007,2008], front:"120/70 ZR17", frontRim:"3.50×17", rear:"160/60 ZR17", rearRim:"4.50×17", note:"Sport touring K.", bikeType:"rt", terrain:["road"] },
+    { model:"K 1200 LT (1999–2008)", years:[1999,2000,2001,2002,2003,2004,2005,2006,2007,2008], front:"120/70 ZR17", frontRim:"3.50×17", rear:"160/60 ZR18", rearRim:"4.50×18", note:"Luxury tourer — 18\" rear.", bikeType:"rt", terrain:["road"] },
+    { model:"K 1300 S (2008–2016)", years:[2008,2009,2010,2011,2012,2013,2014,2015,2016], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/50 ZR17", rearRim:"6.00×17", note:"Sport flagship — 190 rear.", bikeType:"s_series", terrain:["sport","road"] },
+    { model:"K 1300 R (2008–2016)", years:[2008,2009,2010,2011,2012,2013,2014,2015,2016], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Naked K-series.", bikeType:"r_series", terrain:["road","sport"] },
+    { model:"K 1300 GT (2008–2011)", years:[2008,2009,2010,2011], front:"120/70 ZR17", frontRim:"3.50×17", rear:"160/60 ZR17", rearRim:"4.50×17", note:"Sport touring.", bikeType:"rt", terrain:["road"] },
+    { model:"K 1600 GT (2011–present)", years:[2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"6-cylinder flagship — wide 190 rear.", weightKg:348, loadLevel:"extreme", minLI:{front:75, rear:80}, twoUpNote:"Heaviest BMW — 348kg wet. Two-up with luggage can exceed 550kg total. Always use high load-index tires.", bikeType:"rt", terrain:["road"] },
+    { model:"K 1600 GTL (2011–present)", years:[2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"Luxury tourer version of K1600.", weightKg:352, loadLevel:"extreme", minLI:{front:75, rear:80}, twoUpNote:"352kg wet. Two-up with luggage critical — verify load index every time.", bikeType:"rt", terrain:["road"] },
+    { model:"K 1600 B / Grand America (2017–present)", years:[2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"190/55 ZR17", rearRim:"6.00×17", note:"Bagger/touring variants.", weightKg:358, loadLevel:"extreme", minLI:{front:75, rear:80}, twoUpNote:"358kg wet — heaviest BMW made. Load index is critical. Never fit tires without confirming LI rating for two-up loaded touring.", bikeType:"rt", terrain:["road"] },
+  ],
+  "F-Series Street": [
+    { model:"F 800 R (2009–2019)", years:[2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Parallel-twin naked roadster.", bikeType:"f_street", terrain:["road","sport"] },
+    { model:"F 800 ST (2006–2013)", years:[2006,2007,2008,2009,2010,2011,2012,2013], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Sport touring twin.", bikeType:"f_street", terrain:["road"] },
+    { model:"F 800 GT (2013–2019)", years:[2013,2014,2015,2016,2017,2018,2019], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Touring version of F800.", bikeType:"f_street", terrain:["road"] },
+    { model:"F 900 R (2020–present)", years:[2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"New F 900 platform naked roadster.", bikeType:"f_street", terrain:["road","sport"] },
+    { model:"F 900 XR (2020–present)", years:[2020,2021,2022,2023,2024,2025], front:"120/70 ZR17", frontRim:"3.50×17", rear:"180/55 ZR17", rearRim:"5.50×17", note:"Adventure-sport version of F 900 R.", bikeType:"f_street", terrain:["road","sport"] },
+    { model:"G 310 R (2016–present)", years:[2016,2017,2018,2019,2020,2021,2022,2023,2024,2025], front:"110/70 R17", frontRim:"3.00×17", rear:"150/60 R17", rearRim:"4.00×17", note:"Entry-level single-cylinder roadster.", bikeType:"g310r", terrain:["road"] },
+  ],
+  "Cruiser": [
+    { model:"R 18 (2020–present)", years:[2020,2021,2022,2023,2024,2025], front:"120/70 B19", frontRim:"3.50×19", rear:"180/65 B16", rearRim:"5.00×16", note:"B-rated bias ply sizes. Big-bore cruiser.", weightKg:345, loadLevel:"extreme", minLI:{front:74, rear:79}, twoUpNote:"345kg wet heavyweight cruiser. Bias-ply construction — must use correct B-rated tires. Load index critical for two-up riding.", bikeType:"r18", terrain:["road"] },
+    { model:"R 18 Classic (2021–present)", years:[2021,2022,2023,2024,2025], front:"120/70 B19", frontRim:"3.50×19", rear:"180/65 B16", rearRim:"5.00×16", note:"Windshield, saddlebags version.", weightKg:348, loadLevel:"extreme", minLI:{front:74, rear:79}, twoUpNote:"Fully dressed R 18 — verify load index with saddlebags and two-up.", bikeType:"r18", terrain:["road"] },
+    { model:"R 18 Transcontinental (2022–present)", years:[2022,2023,2024,2025], front:"120/70 B19", frontRim:"3.50×19", rear:"180/65 B16", rearRim:"5.00×16", note:"Fully equipped touring cruiser.", weightKg:356, loadLevel:"extreme", minLI:{front:74, rear:79}, twoUpNote:"Full touring kit adds weight — 356kg wet. Load index non-negotiable for two-up.", bikeType:"r18", terrain:["road"] },
+    { model:"R 1200 C (1997–2004)", years:[1997,1998,1999,2000,2001,2002,2003,2004], front:"100/90 R18", frontRim:"2.50×18", rear:"170/60 R17", rearRim:"4.50×17", note:"Classic cruiser — unusual front size.", bikeType:"r18", terrain:["road"] },
+  ],
+  "Scooter": [
+    { model:"C 400 X (2018–present)", years:[2018,2019,2020,2021,2022,2023,2024,2025], front:"110/80 R14", frontRim:"3.50×14", rear:"130/70 R14", rearRim:"4.00×14", note:"Mid-size urban scooter.", bikeType:"c400", terrain:["road"] },
+    { model:"C 400 GT (2019–present)", years:[2019,2020,2021,2022,2023,2024,2025], front:"110/80 R14", frontRim:"3.50×14", rear:"130/70 R14", rearRim:"4.00×14", note:"Touring version of C 400 X.", bikeType:"c400", terrain:["road"] },
+    { model:"CE 04 (2022–present)", years:[2022,2023,2024,2025], front:"120/70 R15", frontRim:"3.50×15", rear:"160/60 R15", rearRim:"4.50×15", note:"Electric scooter — unique 15\" sizes.", bikeType:"ce04", terrain:["road"] },
+    { model:"C 650 GT (2011–2019)", years:[2011,2012,2013,2014,2015,2016,2017,2018,2019], front:"120/70 R15", frontRim:"3.50×15", rear:"160/60 R15", rearRim:"4.50×15", note:"Large maxi-scooter.", bikeType:"c400", terrain:["road"] },
+    { model:"C 650 Sport (2016–2019)", years:[2016,2017,2018,2019], front:"120/70 R15", frontRim:"3.50×15", rear:"160/60 R15", rearRim:"4.50×15", note:"Sport version of C 650.", bikeType:"c400", terrain:["road"] },
+  ],
+};
+
+// =================== TIRE STOCK ===================
+// tread: type of tread pattern
+// split: road/offroad % e.g. "90/10" = 90% road, 10% offroad. "100" = pure road/track
+// wetRating: 1-5 (5=best wet grip)
+// dryRating: 1-5 (5=best dry grip)
+// mileageRating: 1-5 (5=longest lasting)
+// speedRating: e.g. "W","ZR","H","V"
+// bestFor: short phrase
+// oem: BMW models it ships stock on
+const TIRES = [
+  { brand:"Michelin", name:"Road 6 GT", loadIndex:{front:69, rear:73}, heavyBikeOk:true, spectrum:[4,5], bikes:["gs_big","r_series","rt","s_series","f_street"], weather:"all-weather", terrain:["road"], priority:["mileage","comfort"],
+    tread:"Sport-Touring Radial", split:"100% Road", wetRating:5, dryRating:4, mileageRating:5, speedRating:"W/ZR", bestFor:"Year-round touring, wet climates",
+    oem:"R 1250 RT OEM option", features:["Crosslink+ silica compound","Adaptive casing","GT-spec for heavier bikes"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-road-6-gt-tires",
+    desc:"Premium sport-touring. Best-in-class wet grip, outstanding mileage. GT version reinforced for heavier bikes like the RT and GS." },
+
+  { brand:"Michelin", name:"Power 6", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[5,6], bikes:["s_series","f_street","r_series"], weather:"all-weather", terrain:["sport","road"], priority:["grip"],
+    tread:"Sport Radial", split:"100% Road", wetRating:5, dryRating:5, mileageRating:3, speedRating:"ZR",bestFor:"Sport riding in all weather",
+    oem:"", features:["Advanced silica compound","All-weather sport grip","Track-capable"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-power-6-tires",
+    desc:"High-performance sport-touring with exceptional wet traction. Ideal for S 1000 R and F 900 R riders who ride fast in all conditions." },
+
+  { brand:"Michelin", name:"Road 6", loadIndex:{front:69, rear:73}, heavyBikeOk:true, spectrum:[4,5], bikes:["r_series","f_street","rt","gs_big"], weather:"all-weather", terrain:["road"], priority:["mileage","comfort"],
+    tread:"Sport-Touring Radial", split:"100% Road", wetRating:5, dryRating:4, mileageRating:5, speedRating:"W/ZR", bestFor:"All-season road touring",
+    oem:"", features:["Crosslink+ technology","Touring comfort casing","Excellent cold-weather grip"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-road-6-tires",
+    desc:"All-round touring tire with exceptional wet performance and long-distance comfort. The everyday choice for R and F series riders." },
+
+  { brand:"Michelin", name:"Anakee Road", loadIndex:{front:69, rear:73}, heavyBikeOk:true, spectrum:[3,4], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["road","mixed"], priority:["mileage","comfort"],
+    tread:"Adventure Touring Radial", split:"90% Road / 10% Off", wetRating:4, dryRating:4, mileageRating:5, speedRating:"H/V", bestFor:"Daily GS road use, light gravel",
+    oem:"R 1250 GS OEM option", features:["Tread designed for GS geometry","High mileage compound","Handles light gravel confidently"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-anakee-road-tires",
+    desc:"Road-biased GS tire built for the long haul. Excellent on tarmac, handles light gravel. The go-to if the customer rarely goes off-road." },
+
+  { brand:"Michelin", name:"Anakee Wild", loadIndex:{front:67, rear:72}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv","g310gs"], weather:"all-weather", terrain:["offroad","mixed"], priority:["grip"],
+    tread:"Aggressive Knobbly", split:"50% Road / 50% Off", wetRating:3, dryRating:4, mileageRating:2, speedRating:"T/H", bestFor:"Serious off-road, trail riding",
+    oem:"", features:["Deep knobby tread blocks","Self-cleaning mud design","Reinforced sidewall"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-anakee-wild-tires",
+    desc:"True 50/50 adventure tire. Chunky knobbies handle real off-road — dirt, rocks, mud — while remaining rideable on tarmac between trails." },
+
+  { brand:"Michelin", name:"Anakee Adventure", loadIndex:{front:69, rear:73}, heavyBikeOk:true, spectrum:[2,3], bikes:["gs_big","gs_small","gs_adv","g310gs"], weather:"all-weather", terrain:["mixed","offroad"], priority:["grip","value"],
+    tread:"Dual-Sport Radial", split:"70% Road / 30% Off", wetRating:4, dryRating:4, mileageRating:3, speedRating:"H/V", bestFor:"Mixed adventure touring",
+    oem:"R 1250 GS Adventure OEM option", features:["Dual compound front","Good gravel/dirt stability","Touring comfort on road"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-anakee-adventure-tires",
+    desc:"The sweet spot for GS adventure riders. 70/30 road/off-road balance handles most adventure conditions without sacrificing long-distance comfort." },
+
+  { brand:"Michelin", name:"Commander 3 Touring", loadIndex:{front:74, rear:79}, heavyBikeOk:true, spectrum:[4,5], bikes:["rt","r18"], weather:"all-weather", terrain:["road"], priority:["mileage","comfort"],
+    tread:"Cruiser/Tourer Bias-Ply", split:"100% Road", wetRating:4, dryRating:4, mileageRating:5, speedRating:"H/V", bestFor:"Long-distance cruiser and tourer",
+    oem:"R 18 OEM option", features:["Bias-ply construction","Extra mileage compound","Excellent wet stability at highway speed"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-commander-3-touring-tires",
+    desc:"Purpose-built for cruisers and heavy tourers. Exceptional mileage, stable and confidence-inspiring on long highway runs." },
+
+  { brand:"Michelin", name:"City Grip", loadIndex:{front:62, rear:64}, heavyBikeOk:false, spectrum:[4,5], bikes:["ce04","c400"], weather:"wet", terrain:["road"], priority:["grip","value"],
+    tread:"Urban Scooter Radial", split:"100% Road", wetRating:5, dryRating:3, mileageRating:4, speedRating:"V", bestFor:"Urban commuting, rain riding",
+    oem:"CE 04 OEM tire", features:["Deep siping for wet grip","Urban-optimized tread","Designed for scooter geometry"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-city-grip-tires",
+    desc:"The go-to scooter tire for BMW urban riders. Outstanding wet grip specifically engineered for the CE 04 and C 400 wheel geometry." },
+
+  { brand:"Michelin", name:"Pilot Road 4 GT", loadIndex:{front:69, rear:76}, heavyBikeOk:true, spectrum:[4,5], bikes:["gs_big","r_series","rt","s_series"], weather:"all-weather", terrain:["road","sport"], priority:["grip","mileage"],
+    tread:"Sport-Touring Radial", split:"100% Road", wetRating:5, dryRating:4, mileageRating:4, speedRating:"W/ZR", bestFor:"Sport-touring, wet roads",
+    oem:"", features:["Variable contact patch technology","GT spec for heavier bikes","Rain groove drainage system"],
+    revzilla:"https://www.revzilla.com/motorcycle/michelin-pilot-road-4-gt-tires",
+    desc:"Proven sport-touring benchmark. Outstanding wet grip with sporty dry feel. GT version handles the weight of larger BMW twins." },
+
+  { brand:"Dunlop", name:"Trailmax Mission", loadIndex:{front:67, rear:72}, heavyBikeOk:false, spectrum:[2,3], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["mixed","offroad"], priority:["grip","value"],
+    tread:"Dual-Sport Knobbly", split:"50% Road / 50% Off", wetRating:3, dryRating:4, mileageRating:3, speedRating:"T/H", bestFor:"Long-distance adventure trails",
+    oem:"", features:["Reinforced casing for loaded touring","Self-cleaning knobby pattern","Confident gravel handling"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-trailmax-mission-tires",
+    desc:"50/50 adventure tire built for loaded long-distance riding. More touring-focused knobbly pattern than the Raid — good for gravel roads and packed dirt." },
+
+  { brand:"Dunlop", name:"Trailmax Raid", loadIndex:{front:65, rear:69}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["offroad"], priority:["grip"],
+    tread:"Rally/Enduro Knobbly", split:"20% Road / 80% Off", wetRating:3, dryRating:5, mileageRating:2, speedRating:"T/H", bestFor:"Desert, enduro, rally",
+    oem:"", features:["Deep block tread for sand/rock","Rally-inspired pattern","Aggressive cornering knobs"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-trailmax-raid-tires",
+    desc:"For the serious off-road GS rider. 80/20 off-road bias — handles desert, rocky tracks and enduro. Not ideal for long road sections." },
+
+  { brand:"Dunlop", name:"Mutant", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[3,4], bikes:["gs_small","f_street","r_series","g310gs"], weather:"all-weather", terrain:["mixed","road"], priority:["value","grip"],
+    tread:"Adaptive Dual-Sport", split:"70% Road / 30% Off", wetRating:4, dryRating:4, mileageRating:3, speedRating:"W/ZR", bestFor:"Mixed city/gravel riding",
+    oem:"", features:["Tread morphs at speed for better road grip","Good wet performance","Versatile all-rounder"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-mutant-tires",
+    desc:"Lives up to its name — the tread pattern actually changes character at speed, gripping road better when going fast. Great urban adventure tire." },
+
+  { brand:"Dunlop", name:"Q5 Sport Max", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[5,6], bikes:["s_series","f_street","r_series"], weather:"dry", terrain:["sport"], priority:["grip"],
+    tread:"Sport Radial", split:"100% Road", wetRating:3, dryRating:5, mileageRating:2, speedRating:"ZR", bestFor:"Dry sport riding, canyon carving",
+    oem:"", features:["High-silica dry compound","Fast warm-up time","Track-day capable"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-sportmax-q5-tires",
+    desc:"Pure sport tire for dry conditions. Fast warm-up, excellent dry grip. Not the choice for a daily commuter in wet weather — save it for sunny sport rides." },
+
+  { brand:"Dunlop", name:"Sport Max Q5A", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[5,6], bikes:["s_series","f_street","r_series"], weather:"all-weather", terrain:["sport","road"], priority:["grip"],
+    tread:"Sport Radial", split:"100% Road", wetRating:4, dryRating:5, mileageRating:3, speedRating:"ZR", bestFor:"All-weather sport riding",
+    oem:"", features:["All-weather silica compound","NTEC technology for track use","Strong wet and dry balance"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-sportmax-q5a-tires",
+    desc:"The Q5 for riders who don't want to swap tires when it rains. Nearly as grippy as the Q5 dry but with real wet weather confidence added." },
+
+  { brand:"Dunlop", name:"Road Sport 2", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[4,5], bikes:["r_series","f_street","s_series"], weather:"all-weather", terrain:["road","sport"], priority:["value","mileage"],
+    tread:"Sport-Touring Radial", split:"100% Road", wetRating:4, dryRating:4, mileageRating:4, speedRating:"W/ZR", bestFor:"Sport-touring value choice",
+    oem:"", features:["Good mileage for a sport tire","Strong wet/dry balance","Great value"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-roadsmart-ii-tires",
+    desc:"Excellent value sport-touring tire. Strong all-round performance without the premium price tag of the Michelin or Pirelli options." },
+
+  { brand:"Dunlop", name:"Road Smart 4", loadIndex:{front:69, rear:76}, heavyBikeOk:true, spectrum:[4,5], bikes:["rt","r_series","gs_big"], weather:"all-weather", terrain:["road"], priority:["mileage","comfort"],
+    tread:"Touring Radial", split:"100% Road", wetRating:4, dryRating:4, mileageRating:5, speedRating:"W/ZR", bestFor:"Heavy bike touring, maximum mileage",
+    oem:"", features:["Jointless belt construction","Self-supporting sidewall for heavy bikes","Exceptional mileage life"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-roadsmart-iv-tires",
+    desc:"Built for heavy BMW tourers. Jointless belt construction gives excellent stability under load. Among the highest mileage touring tires available." },
+
+  { brand:"Dunlop", name:"GPR 300", loadIndex:{front:62, rear:66}, heavyBikeOk:false, spectrum:[5,6], bikes:["g310r","g310gs","f_street"], weather:"all-weather", terrain:["road","sport"], priority:["value"],
+    tread:"Sport Radial", split:"100% Road", wetRating:4, dryRating:4, mileageRating:3, speedRating:"W/ZR", bestFor:"Smaller BMWs, everyday sport",
+    oem:"G 310 R OEM tire", features:["Sized for smaller wheels","Good wet/dry balance","Affordable"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-gpr-300-tires",
+    desc:"The sport tire for the smaller BMW range. Comes stock on the G 310 R — a solid all-round performer that won't break the bank." },
+
+  { brand:"Dunlop", name:"Moto Z Tractionator Rally GPS", loadIndex:{front:65, rear:69}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["offroad"], priority:["grip"],
+    tread:"Rally/GPS Knobbly", split:"10% Road / 90% Off", wetRating:3, dryRating:5, mileageRating:2, speedRating:"T", bestFor:"Rally racing, extreme off-road",
+    oem:"", features:["GPS tread for sand/gravel","Extreme off-road blocks","Heavy-duty casing"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-tractionator-gps-tires",
+    desc:"When the customer wants to go full Dakar. Aggressive rally-spec knobbly for serious off-road GS use. Road manners are secondary." },
+
+  { brand:"Dunlop", name:"Dual Venture Adventure", loadIndex:{front:67, rear:72}, heavyBikeOk:false, spectrum:[2,3], bikes:["gs_big","gs_small","gs_adv","g310gs"], weather:"all-weather", terrain:["mixed","offroad"], priority:["value","grip"],
+    tread:"Dual-Sport Knobbly", split:"50% Road / 50% Off", wetRating:3, dryRating:4, mileageRating:3, speedRating:"H/V", bestFor:"Budget adventure, mixed terrain",
+    oem:"", features:["Good value 50/50 tire","Comfortable on gravel roads","Decent road manners"],
+    revzilla:"https://www.revzilla.com/motorcycle/dunlop-trailmax-meridian-tires",
+    desc:"A solid value 50/50 adventure tire. Good confidence on gravel and dirt, handles road sections without drama. Great budget option for GS adventure riders." },
+
+  { brand:"Metzeler", name:"Karoo 4", loadIndex:{front:67, rear:72}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["offroad","mixed"], priority:["grip"],
+    tread:"Aggressive Knobbly", split:"40% Road / 60% Off", wetRating:3, dryRating:5, mileageRating:2, speedRating:"T/H", bestFor:"Rocky terrain, technical off-road",
+    oem:"R 1300 GS Karoo option, R 1250 GS OEM option", features:["Legendary Karoo heritage","Reinforced sidewall for rocky terrain","Excellent mud shedding"],
+    revzilla:"https://www.revzilla.com/motorcycle/metzeler-karoo-4-tires",
+    desc:"The legendary Karoo bloodline. Best-in-class traction on rocks, dirt and rough terrain. One of the most trusted GS off-road tires ever made." },
+
+  { brand:"Metzeler", name:"Roadtec 01 Interact Z8", loadIndex:{front:69, rear:76}, heavyBikeOk:true, spectrum:[4,5], bikes:["r_series","rt","gs_big","f_street"], weather:"all-weather", terrain:["road"], priority:["mileage","comfort"],
+    tread:"Sport-Touring Radial", split:"100% Road", wetRating:4, dryRating:4, mileageRating:5, speedRating:"W/ZR", bestFor:"Long-distance touring, maximum mileage",
+    oem:"R 1250 R / RS OEM, R 1250 RT OEM", features:["Interact compound: hard center / soft shoulder","Exceptional mileage","Even wear pattern"],
+    revzilla:"https://www.revzilla.com/motorcycle/metzeler-roadtec-01-tires",
+    desc:"The Interact compound is clever — harder rubber in the center for mileage, softer on the shoulders for corner grip. Outstanding OEM choice across the R series." },
+
+  { brand:"Metzeler", name:"ME888", loadIndex:{front:74, rear:79}, heavyBikeOk:true, spectrum:[4,5], bikes:["rt","r18"], weather:"all-weather", terrain:["road"], priority:["mileage","comfort"],
+    tread:"Cruiser/Tourer Bias-Ply", split:"100% Road", wetRating:4, dryRating:4, mileageRating:5, speedRating:"H/V", bestFor:"Cruiser and tourer long haul",
+    oem:"R 18 Roctane OEM tire", features:["Extra-long mileage compound","Stable at highway speed","Bias-ply cruiser construction"],
+    revzilla:"https://www.revzilla.com/motorcycle/metzeler-me-888-marathon-ultra-tires",
+    desc:"The ultimate long-haul cruiser tire. Comes stock on the R 18 Roctane — exceptional mileage and highway stability for BMW's big cruiser lineup." },
+
+  { brand:"Mitas", name:"Enduro Trail Dakar", loadIndex:{front:65, rear:69}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["offroad"], priority:["grip"],
+    tread:"Dakar-Style Knobbly", split:"20% Road / 80% Off", wetRating:3, dryRating:5, mileageRating:2, speedRating:"T/H", bestFor:"Hard enduro, rocky terrain",
+    oem:"", features:["Dakar-heritage tread","Hard terrain specialist","Reinforced casing"],
+    revzilla:"https://www.revzilla.com/motorcycle/mitas-enduro-trail-dakar-tires",
+    desc:"Inspired by Dakar Rally racing. Built for hard, rocky terrain where grip trumps everything else. Not a road tire — save it for the trails." },
+
+  { brand:"Mitas", name:"Enduro Trail Dakar +", loadIndex:{front:67, rear:72}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["offroad"], priority:["grip"],
+    tread:"Dakar-Style Knobbly (Enhanced)", split:"20% Road / 80% Off", wetRating:3, dryRating:5, mileageRating:2, speedRating:"T/H", bestFor:"Extreme rocky/hard terrain",
+    oem:"", features:["Enhanced Dakar compound","Superior rock grip","Extra-reinforced casing vs standard Dakar"],
+    revzilla:"https://www.revzilla.com/motorcycle/mitas-enduro-trail-plus-dakar-tires",
+    desc:"The Dakar+ takes the standard Dakar compound further — harder casing and enhanced grip for even more extreme rocky terrain conditions." },
+
+  { brand:"Mitas", name:"Touring Force", loadIndex:{front:69, rear:73}, heavyBikeOk:true, spectrum:[3,4], bikes:["gs_big","gs_adv","rt"], weather:"all-weather", terrain:["road","mixed"], priority:["value","comfort"],
+    tread:"Adventure Touring Radial", split:"80% Road / 20% Off", wetRating:4, dryRating:4, mileageRating:4, speedRating:"H/V", bestFor:"Loaded adventure touring on road",
+    oem:"", features:["Good mileage for an adventure tire","Comfortable on loaded bikes","Handles light gravel"],
+    revzilla:"https://www.revzilla.com/motorcycle/mitas-touring-force-tires",
+    desc:"A solid value adventure-touring tire. Good mileage, comfortable ride for loaded GS touring. Not aggressive off-road but handles gravel confidently." },
+
+  { brand:"Pirelli", name:"Diablo Rosso 4", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[5,6], bikes:["s_series","r_series","f_street"], weather:"all-weather", terrain:["sport","road"], priority:["grip"],
+    tread:"Sport Radial", split:"100% Road", wetRating:5, dryRating:5, mileageRating:3, speedRating:"ZR", bestFor:"Fast road riding, occasional track",
+    oem:"", features:["Dual compound tread","Exceptional wet AND dry grip","Track-capable on road tire"],
+    revzilla:"https://www.revzilla.com/motorcycle/pirelli-diablo-rosso-4-tires",
+    desc:"Pirelli's best sport street tire. Remarkable that it grips this well in both wet and dry — a rare combination. The choice for fast road riders on S and R series." },
+
+  { brand:"Pirelli", name:"Diablo Super Corsa V4", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[6,7], bikes:["s_series"], weather:"dry", terrain:["sport"], priority:["grip"],
+    tread:"Race Slick-Style Radial", split:"100% Track/Dry Road", wetRating:1, dryRating:5, mileageRating:1, speedRating:"ZR", bestFor:"Track days, circuit racing",
+    oem:"", features:["WSBK-derived compound","Race-spec tread pattern","Requires heat to activate — NOT for cold/wet roads"],
+    revzilla:"https://www.revzilla.com/motorcycle/pirelli-diablo-supercorsa-sp-v4-tires",
+    desc:"Full race replica. Maximum dry grip for track days on the S 1000 RR. Warn customers — this tire needs heat to work. Cold or wet roads are dangerous." },
+
+  { brand:"Pirelli", name:"Diablo Rosso 4 Corsa", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[6,7], bikes:["s_series","r_series"], weather:"dry", terrain:["sport"], priority:["grip"],
+    tread:"Sport-Race Radial", split:"100% Track/Dry Road", wetRating:2, dryRating:5, mileageRating:2, speedRating:"ZR", bestFor:"Track days with occasional road",
+    oem:"", features:["Corsa-spec compound","Faster warm-up than full race tire","Still road-legal"],
+    revzilla:"https://www.revzilla.com/motorcycle/pirelli-diablo-rosso-corsa-iv-tires",
+    desc:"The trackday tire that you can ride home on. More road-usable than the Super Corsa but still far more grip-focused than the standard Rosso 4." },
+
+  { brand:"Pirelli", name:"Diablo Super Corsa V3", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[6,7], bikes:["s_series"], weather:"dry", terrain:["sport"], priority:["grip"],
+    tread:"Race Slick-Style Radial", split:"100% Track/Dry Road", wetRating:1, dryRating:5, mileageRating:1, speedRating:"ZR", bestFor:"Track days, circuit racing",
+    oem:"", features:["Previous-gen WSBK compound","Still excellent track performance","May be available at lower price"],
+    revzilla:"https://www.revzilla.com/motorcycle/pirelli-diablo-supercorsa-sp-v3-tires",
+    desc:"The V3 predecessor to the Super Corsa V4. Still a benchmark track tire — if the V4 is out of stock or over budget, the V3 delivers similar circuit performance." },
+
+  { brand:"Continental", name:"TKC 80", loadIndex:{front:65, rear:69}, heavyBikeOk:false, spectrum:[1,2], bikes:["gs_big","gs_small","gs_adv","g310gs"], weather:"all-weather", terrain:["offroad","mixed"], priority:["grip","value"],
+    tread:"Classic Knobbly", split:"20% Road / 80% Off", wetRating:3, dryRating:4, mileageRating:3, speedRating:"T/H", bestFor:"Off-road adventure, classic GS look",
+    oem:"", features:["Iconic tread pattern","Good rock and gravel grip","Available in many GS sizes"],
+    revzilla:"https://www.revzilla.com/motorcycle/continental-tkc-80-tires",
+    desc:"The legendary TKC 80. Instantly recognizable knobbly pattern — a classic GS off-road tire that has been trusted for decades. Gets the job done off road." },
+
+  { brand:"Continental", name:"ContiTrail Attack 3", loadIndex:{front:69, rear:73}, heavyBikeOk:false, spectrum:[2,3], bikes:["gs_big","gs_small","gs_adv"], weather:"all-weather", terrain:["mixed","offroad"], priority:["value","grip"],
+    tread:"Dual-Sport Radial", split:"50% Road / 50% Off", wetRating:4, dryRating:4, mileageRating:3, speedRating:"W/ZR", bestFor:"50/50 adventure with sportier road feel",
+    oem:"", features:["Sport-biased road feel","Good wet grip for an adventure tire","Sporty handling on tarmac"],
+    revzilla:"https://www.revzilla.com/motorcycle/continental-contitrailattack-3-tires",
+    desc:"50/50 adventure tire with the sportiest road feel in its class. Handles gravel and dirt confidently but feels more like a sport-touring tire on the road." },
+
+  { brand:"Shinko", name:"Trail Master", loadIndex:{front:65, rear:69}, heavyBikeOk:false, spectrum:[2,3], bikes:["gs_small","g310gs","gs_adv"], weather:"all-weather", terrain:["mixed","offroad"], priority:["value"],
+    tread:"Dual-Sport Knobbly", split:"50% Road / 50% Off", wetRating:3, dryRating:3, mileageRating:3, speedRating:"T/H", bestFor:"Budget adventure, price-conscious buyer",
+    oem:"", features:["Strong value for price","Decent off-road capability","Good for smaller GS models"],
+    revzilla:"https://www.revzilla.com/motorcycle/shinko-244-series-tires",
+    desc:"The budget-friendly adventure option. Solid performance for the price — perfect for the customer who wants adventure capability without paying premium tire prices." },
+
+  { brand:"Heidenau", name:"K60 Scout", loadIndex:{front:67, rear:72}, heavyBikeOk:false, spectrum:[2,3], bikes:["gs_big","gs_small","gs_adv","g310gs"], weather:"all-weather", terrain:["mixed","offroad"], priority:["grip","value"],
+    tread:"Dual-Sport Knobbly", split:"40% Road / 60% Off", wetRating:3, dryRating:4, mileageRating:4, speedRating:"T/H", bestFor:"Long-lasting adventure, durability focus",
+    oem:"", features:["German-engineered durability","Outstanding wear life for a knobbly","Excellent rock and gravel grip"],
+    revzilla:"https://www.revzilla.com/motorcycle/heidenau-k60-scout-tires",
+    desc:"German engineering meets adventure reliability. The K60 Scout is known for outlasting most competitors in its class. Great grip on rocks and gravel, and it lasts." },
+];
+
+// =================== LOAD INDEX HELPER ===================
+function loadIndexToKg(li) {
+  const table = {60:250,61:257,62:265,63:272,64:280,65:290,66:300,67:307,68:315,69:325,70:335,71:345,72:355,73:365,74:375,75:387,76:400,77:412,78:425,79:437,80:450};
+  return table[li] || '?';
+}
+
+// =================== WIZARD STATE ===================
+let state = { cat:'', model:null, year:'', terrain:'', weather:'', priority:'', priorities:[] };
+
+function onCatChange() {
+  const cat = document.getElementById('catSelect').value;
+  state.cat = cat;
+  state.model = null;
+  state.year = '';
+  document.getElementById('sizeDisplay').style.display = 'none';
+  document.getElementById('toStep2Btn').disabled = true;
+  const mSel = document.getElementById('modelSelect');
+  const ySel = document.getElementById('yearSelect');
+  mSel.innerHTML = '<option value="">— Select model —</option>';
+  ySel.innerHTML = '<option value="">— Select year —</option>';
+  ySel.disabled = true;
+  if (!cat) { mSel.disabled = true; return; }
+  const models = BIKES[cat] || [];
+  models.forEach((b,i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = b.model; mSel.appendChild(o);
+  });
+  mSel.disabled = false;
+}
+
+function onModelChange() {
+  const cat = document.getElementById('catSelect').value;
+  const mi = document.getElementById('modelSelect').value;
+  document.getElementById('sizeDisplay').style.display = 'none';
+  document.getElementById('toStep2Btn').disabled = true;
+  const ySel = document.getElementById('yearSelect');
+  ySel.innerHTML = '<option value="">— Select year —</option>';
+  if (mi === '') { ySel.disabled = true; return; }
+  state.model = BIKES[cat][parseInt(mi)];
+  const years = state.model.years.slice().sort((a,b)=>b-a);
+  years.forEach(y => {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y; ySel.appendChild(o);
+  });
+  ySel.disabled = false;
+}
+
+function onYearChange() {
+  const yr = document.getElementById('yearSelect').value;
+  state.year = yr;
+  if (!yr || !state.model) { document.getElementById('sizeDisplay').style.display='none'; return; }
+  document.getElementById('frontSize').textContent = state.model.front;
+  document.getElementById('frontRim').textContent = 'Rim: ' + state.model.frontRim;
+  document.getElementById('rearSize').textContent = state.model.rear;
+  document.getElementById('rearRim').textContent = 'Rim: ' + state.model.rearRim;
+  document.getElementById('sizeNote').textContent = state.model.note || '';
+  document.getElementById('sizeDisplay').style.display = 'block';
+  document.getElementById('toStep2Btn').disabled = false;
+
+  // Show weight warning if applicable
+  const wb = document.getElementById('weightWarning');
+  const m = state.model;
+  if (m.loadLevel === 'extreme') {
+    wb.style.display = 'block';
+    wb.innerHTML = `<div class="weight-warning danger">
+      <div class="weight-warning-icon">🚨</div>
+      <div>
+        <div class="weight-warning-title">Heavy Bike — Load Index Critical</div>
+        <div class="weight-warning-body">
+          <strong>${m.model}</strong> weighs <strong>${m.weightKg}kg wet</strong> — one of BMW's heaviest bikes.<br>
+          ${m.twoUpNote}<br><br>
+          <strong>Minimum Load Index Required:</strong>
+          <table class="load-index-table">
+            <tr><th>Position</th><th>Min Load Index</th><th>Min Capacity</th></tr>
+            <tr><td>Front</td><td>${m.minLI.front}</td><td>${loadIndexToKg(m.minLI.front)}kg</td></tr>
+            <tr><td>Rear</td><td>${m.minLI.rear}</td><td>${loadIndexToKg(m.minLI.rear)}kg</td></tr>
+          </table>
+          <br>⚠️ <strong>Always confirm tire load index before ordering for this bike.</strong>
+        </div>
+      </div>
+    </div>`;
+  } else if (m.loadLevel === 'heavy') {
+    wb.style.display = 'block';
+    wb.innerHTML = `<div class="weight-warning warn">
+      <div class="weight-warning-icon">⚠️</div>
+      <div>
+        <div class="weight-warning-title">Heavy Bike — Verify Load Rating Two-Up</div>
+        <div class="weight-warning-body">
+          <strong>${m.model}</strong> weighs <strong>${m.weightKg}kg wet</strong>.<br>
+          ${m.twoUpNote}<br><br>
+          <strong>Recommended Minimum Load Index:</strong>
+          <table class="load-index-table">
+            <tr><th>Position</th><th>Min Load Index</th><th>Min Capacity</th></tr>
+            <tr><td>Front</td><td>${m.minLI.front}</td><td>${loadIndexToKg(m.minLI.front)}kg</td></tr>
+            <tr><td>Rear</td><td>${m.minLI.rear}</td><td>${loadIndexToKg(m.minLI.rear)}kg</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    wb.style.display = 'none';
+    wb.innerHTML = '';
+  }
+}
+
+function togglePriority(val, el) {
+  if (!state.priorities) state.priorities = [];
+  if (state.priorities.includes(val)) {
+    state.priorities = state.priorities.filter(p => p !== val);
+    el.classList.remove('selected');
+  } else {
+    state.priorities.push(val);
+    el.classList.add('selected');
+  }
+  const allSet = state.terrain && state.weather && state.priorities.length > 0;
+  document.getElementById('toStep3Btn').disabled = !allSet;
+}
+
+function selectQ(group, val, el) {
+  document.querySelectorAll(`[onclick*="selectQ('${group}'"]`).forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state[group] = val;
+  const allSet = state.terrain && state.weather && state.priorities && state.priorities.length > 0;
+  document.getElementById('toStep3Btn').disabled = !allSet;
+}
+
+function goStep2() {
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('step3').style.display = 'none';
+  setStepUI(2);
+}
+
+function goStep1() {
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'none';
+  setStepUI(1);
+}
+
+function goStep3() {
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'block';
+  setStepUI(3);
+  buildRecommendations();
+}
+
+function setStepUI(n) {
+  [1,2,3].forEach(i => {
+    const num = document.getElementById('snum'+i);
+    const txt = document.getElementById('stxt'+i);
+    num.className = 'step-num' + (i < n ? ' done' : i === n ? ' active' : '');
+    txt.className = 'step-text' + (i < n ? ' done' : i === n ? ' active' : '');
+    if (i < 3) document.getElementById('sline'+i).className = 'step-line' + (i < n ? ' done' : '');
+  });
+}
+
+function buildRecommendations() {
+  const m = state.model;
+  document.getElementById('step3Sub').textContent = m.model + ' ' + state.year + ' — ' + state.terrain.charAt(0).toUpperCase() + state.terrain.slice(1) + ' riding';
+  document.getElementById('r3Front').textContent = m.front;
+  document.getElementById('r3FrontRim').textContent = 'Rim: ' + m.frontRim;
+  document.getElementById('r3Rear').textContent = m.rear;
+  document.getElementById('r3RearRim').textContent = 'Rim: ' + m.rearRim;
+
+  // Score tires
+  let scored = TIRES.map(t => {
+    let score = 0;
+    if (t.bikes.includes(m.bikeType)) score += 10;
+    if (t.terrain.includes(state.terrain)) score += 8;
+    if (state.weather === 'wet' && (t.weather === 'wet' || t.weather === 'all-weather')) score += 5;
+    if (state.weather === 'dry' && (t.weather === 'dry' || t.weather === 'all-weather')) score += 5;
+    if (state.weather === 'wet' && t.weather === 'dry') score -= 8;
+    const priorities = state.priorities || [];
+    priorities.forEach(p => { if (t.priority.includes(p)) score += 6; });
+    return { ...t, score };
+  }).filter(t => t.score >= 10).sort((a,b) => b.score - a.score).slice(0,5);
+
+  const grid = document.getElementById('recGrid');
+  if (scored.length === 0) {
+    grid.innerHTML = '<div class="no-rec">No matching tires found in current stock for this configuration. Try adjusting your selections.</div>';
+    return;
+  }
+
+  grid.innerHTML = scored.map((t, i) => {
+    const isTop = i === 0;
+    const wBadge = t.weather === 'wet' ? '<span class="badge badge-wet">Wet focus</span>' : t.weather === 'dry' ? '<span class="badge badge-dry">Dry / Track only</span>' : '<span class="badge badge-aw">All-weather</span>';
+    const topBadge = isTop ? '<span class="badge badge-top">⭐ Top Pick</span>' : '';
+    const featBadges = (t.features||[]).map(f=>`<span class="badge-feat">${f}</span>`).join('');
+    const oemLine = t.oem ? `<div class="rec-oem"><strong>OEM Fitment:</strong> ${t.oem}</div>` : '';
+    const ratingBar = (val, color) => `<div class="rec-stat-bar"><div class="rec-stat-fill" style="width:${val*20}%;background:${color};"></div></div>`;
+    // Load index warning for heavy bikes
+    const bikeLoadLevel = m.loadLevel || 'standard';
+    const tireOk = t.heavyBikeOk;
+    let loadWarning = '';
+    if (bikeLoadLevel === 'extreme' && !tireOk) {
+      loadWarning = `<div class="rec-load"><span class="rec-load-badge heavy">⚠️ Load Index — Verify Before Ordering</span><span style="font-size:11px;color:var(--danger)">This tire may NOT meet load requirements for this heavy bike two-up with luggage. Confirm load index with parts manager.</span></div>`;
+    } else if (bikeLoadLevel === 'heavy' && !tireOk) {
+      loadWarning = `<div class="rec-load"><span class="rec-load-badge warn">⚠️ Check Load Rating Two-Up</span><span style="font-size:11px;color:var(--warn)">Verify load index is sufficient for two-up and loaded riding on this bike.</span></div>`;
+    } else if (tireOk) {
+      loadWarning = `<div class="rec-load"><span class="rec-load-badge ok">✓ Heavy Bike Rated</span><span style="font-size:11px;color:var(--text-muted)">Front LI: ${t.loadIndex.front} (${loadIndexToKg(t.loadIndex.front)}kg) &nbsp;|&nbsp; Rear LI: ${t.loadIndex.rear} (${loadIndexToKg(t.loadIndex.rear)}kg)</span></div>`;
+    } else {
+      loadWarning = `<div class="rec-load"><span style="font-size:11px;color:var(--text-muted)">Load Index — Front: ${t.loadIndex.front} (${loadIndexToKg(t.loadIndex.front)}kg) &nbsp;|&nbsp; Rear: ${t.loadIndex.rear} (${loadIndexToKg(t.loadIndex.rear)}kg)</span></div>`;
+    }
+
+    const revzillaBtn = t.revzilla ? `<button onclick="event.stopPropagation();window.open('${t.revzilla}','_blank')" style="margin-top:4px;width:100%;padding:10px;background:#e8f0fe;border:1.5px solid #1C69D4;border-radius:8px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1C69D4;display:flex;align-items:center;justify-content:center;gap:6px;">🛒 Check Retail Price on RevZilla</button>` : '';
+    return `<div class="rec-card${isTop?' top-pick':''}">
+      <div class="rec-header">
+        <div>
+          <div class="rec-brand">${t.brand}</div>
+          <div class="rec-name">${t.name}</div>
+          <div class="rec-badges" style="margin-top:6px">${topBadge}${wBadge}</div>
+        </div>
+        <div class="rec-sizes">
+          <div class="rec-size-label">Front</div>
+          <div class="rec-size-val">${m.front}</div>
+          <br>
+          <div class="rec-size-label">Rear</div>
+          <div class="rec-size-val">${m.rear}</div>
+        </div>
+      </div>
+      <div class="rec-divider"></div>
+      <div class="rec-stats">
+        <div class="rec-stat">
+          <div class="rec-stat-label">Wet Grip</div>
+          <div class="rec-stat-value">${'★'.repeat(t.wetRating)}${'☆'.repeat(5-t.wetRating)}</div>
+          ${ratingBar(t.wetRating,'#1C69D4')}
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Dry Grip</div>
+          <div class="rec-stat-value">${'★'.repeat(t.dryRating)}${'☆'.repeat(5-t.dryRating)}</div>
+          ${ratingBar(t.dryRating,'#8C1C3A')}
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Mileage</div>
+          <div class="rec-stat-value">${'★'.repeat(t.mileageRating)}${'☆'.repeat(5-t.mileageRating)}</div>
+          ${ratingBar(t.mileageRating,'#2E8B2E')}
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Speed Rating</div>
+          <div class="rec-stat-value">${t.speedRating}</div>
+        </div>
+      </div>
+      <div class="rec-divider"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+        <div><span style="font-weight:700;color:var(--text-muted);text-transform:uppercase;font-size:10px;letter-spacing:0.08em;">Tread Type</span><br>${t.tread}</div>
+        <div><span style="font-weight:700;color:var(--text-muted);text-transform:uppercase;font-size:10px;letter-spacing:0.08em;">Road/Off-Road</span><br>${t.split}</div>
+        <div style="grid-column:1/-1"><span style="font-weight:700;color:var(--text-muted);text-transform:uppercase;font-size:10px;letter-spacing:0.08em;">Best For</span><br>${t.bestFor}</div>
+      </div>
+      <div class="rec-divider"></div>
+      <div class="rec-desc">${t.desc}</div>
+      <div class="rec-features">${featBadges}</div>
+      ${oemLine}
+      ${loadWarning}
+      ${revzillaBtn}
+    </div>`;
+  }).join('');
+}
+
+function resetWizard() {
+  state = { cat:'', model:null, year:'', terrain:'', weather:'', priority:'', priorities:[] };
+  document.getElementById('catSelect').value = '';
+  document.getElementById('modelSelect').innerHTML = '<option value="">— Select model —</option>';
+  document.getElementById('modelSelect').disabled = true;
+  document.getElementById('yearSelect').innerHTML = '<option value="">— Select year —</option>';
+  document.getElementById('yearSelect').disabled = true;
+  document.getElementById('sizeDisplay').style.display = 'none';
+  document.getElementById('weightWarning').style.display = 'none';
+  document.getElementById('weightWarning').innerHTML = '';
+  document.getElementById('toStep2Btn').disabled = true;
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('selected'));
+  goStep1();
+}
+
+// =================== QUICK BROWSER ===================
+const SPECTRUM_NAMES = ["","Full off-road","Off-road / Adventure","Adventure","Adventure / Street","Street / Touring","Sport / Street","Track / Race"];
+const SPECTRUM_COLORS = ["","#9E5C00","#7A7A00","#2E8B2E","#1C7A8C","#1C69D4","#5C2E8C","#8C1C3A"];
+const MODEL_LABELS = { gs_big:"R 1300/1250/1200 GS", gs_small:"F 900/850/750 GS", gs_adv:"GS Adventure", g310gs:"G 310 GS", r_series:"R 1250 R / RS", s_series:"S 1000 R/RR/XR", f_street:"F 900 R / XR", g310r:"G 310 R", rt:"RT / K 1600", r18:"R 18", ce04:"CE 04", c400:"C 400 X/GT" };
+
+function renderTires() {
+  const sv = parseInt(document.getElementById('spectrum').value);
+  const bt = document.getElementById('bikeType').value;
+  const br = document.getElementById('brand').value;
+  const wt = document.getElementById('weather').value;
+  document.getElementById('spectrum-label').textContent = SPECTRUM_NAMES[sv];
+  document.getElementById('spectrum-label').style.color = SPECTRUM_COLORS[sv];
+  let filtered = TIRES.filter(t => {
+    const inS = sv >= t.spectrum[0] && sv <= t.spectrum[1];
+    const inB = bt === 'all' || t.bikes.includes(bt);
+    const inBr = br === 'all' || t.brand === br;
+    const inW = wt === 'all' || t.weather === wt || (wt === 'wet' && t.weather === 'all-weather') || (wt === 'all-weather' && t.weather === 'all-weather');
+    return inS && inB && inBr && inW;
+  });
+  document.getElementById('results-count').innerHTML = '<span>' + filtered.length + '</span> tire' + (filtered.length !== 1 ? 's' : '') + ' found';
+  const grid = document.getElementById('tire-grid');
+  if (!filtered.length) { grid.innerHTML = '<div class="no-results">No tires match — try adjusting the filters.</div>'; return; }
+  grid.innerHTML = filtered.map(t => {
+    const lp = ((t.spectrum[0]-1)/6*100).toFixed(1);
+    const wp = ((t.spectrum[1]-t.spectrum[0]+1)/6*100).toFixed(1);
+    const mid = Math.round((t.spectrum[0]+t.spectrum[1])/2);
+    const wB = t.weather==='wet'?'<span class="badge badge-wet">Wet focus</span>':t.weather==='dry'?'<span class="badge badge-dry">Dry/Track</span>':'<span class="badge badge-allweather">All-weather</span>';
+    const mB = t.bikes.map(b=>`<span class="badge badge-model">${MODEL_LABELS[b]||b}</span>`).join('');
+    return `<div class="tire-card"><div class="tire-brand">${t.brand}</div><div class="tire-name">${t.name}</div><div class="tire-spectrum-bar"><div class="tire-spectrum-fill" style="left:${lp}%;width:${wp}%;background:${SPECTRUM_COLORS[mid]};"></div></div><div class="tire-badges">${wB}</div><div class="tire-badges">${mB}</div><div class="tire-desc">${t.desc}</div></div>`;
+  }).join('');
+}
+
+document.getElementById('spectrum').addEventListener('input', renderTires);
+document.getElementById('bikeType').addEventListener('change', renderTires);
+document.getElementById('brand').addEventListener('change', renderTires);
+document.getElementById('weather').addEventListener('change', renderTires);
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  el.classList.add('active');
+}
+
+renderTires();
+</script>
+</body>
+</html>
